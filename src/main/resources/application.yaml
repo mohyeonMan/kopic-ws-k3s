@@ -1,3 +1,11 @@
 spring:
   application:
     name: kopic-ws
+  profiles:
+    default: local
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: kopic
+    password: kopic123
