@@ -3,13 +3,11 @@ package io.jhpark.kopic.ws.outbound;
 import org.springframework.stereotype.Component;
 
 import io.jhpark.kopic.ws.common.util.CommonMapper;
-import io.jhpark.kopic.ws.conn.command.dto.WsEvent;
 import io.jhpark.kopic.ws.conn.handler.WsMessageSender;
 import io.jhpark.kopic.ws.outbound.dto.GeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-
 
 @Slf4j
 @Component
