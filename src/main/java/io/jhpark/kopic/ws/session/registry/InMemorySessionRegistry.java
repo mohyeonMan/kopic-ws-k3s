@@ -23,7 +23,7 @@ public class InMemorySessionRegistry implements SessionRegistry {
 	@Override
 	public void save(WsSession session) {
 		sessionsBySessionId.put(session.getSession().getId(), session);
-		log.info("Session saved: {}", session.getSessionId());
+		log.info("Session saved: {}", session.toString());
 	}
 
 	@Override

@@ -1,8 +1,10 @@
 package io.jhpark.kopic.ws.conn.domain;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 public record KopicEnvelope(
     int e,
-    String p
+    JsonNode p
     // String rid
 ) {
 }

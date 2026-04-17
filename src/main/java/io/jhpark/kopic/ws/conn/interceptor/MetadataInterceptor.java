@@ -17,8 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component  
 public class MetadataInterceptor implements HandshakeInterceptor {
     
-    public static final String ATTR_ROOM_ID = "roomId";
+    public static final String ATTR_ROOM_CODE = "roomId";
     public static final String ATTR_GE_ID = "geId";
+	public static final String ATTR_NICKNAME = "nickname";
     
     @Override
 	public boolean beforeHandshake(
@@ -30,17 +31,19 @@ public class MetadataInterceptor implements HandshakeInterceptor {
         URI uri = request.getURI();
 		var queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
 		String geId = queryParams.getFirst("geId");
-		String roomId = queryParams.getFirst("roomId");
+		String roomCode = queryParams.getFirst("roomCode");
+		String nickname = queryParams.getFirst("nickname");
 
-		if (roomId == null || roomId.isBlank() || geId == null || geId.isBlank()) {
-			log.warn("ws handshake rejected missing query params roomId={} geId={}", roomId, geId);
+		if (geId == null || geId.isBlank() || nickname == null || nickname.isBlank()) {
+			log.warn("ws handshake rejected missing query params geId={} nickname={}", geId, nickname);
 			response.setStatusCode(HttpStatus.BAD_REQUEST);
 			return false;
 		}
 
-		log.info("ws handshake accepted geId={} roomId={}", geId, roomId);
-		attributes.put(ATTR_ROOM_ID, roomId);
+		log.info("ws handshake accepted geId={} roomCode={}", geId, roomCode);
+		attributes.put(ATTR_ROOM_CODE, roomCode);
 		attributes.put(ATTR_GE_ID, geId);
+		attributes.put(ATTR_NICKNAME, nickname);
 		return true;
     }
 

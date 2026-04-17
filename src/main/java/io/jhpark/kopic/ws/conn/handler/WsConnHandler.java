@@ -11,8 +11,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import io.jhpark.kopic.ws.common.util.CommonMapper;
 import io.jhpark.kopic.ws.conn.command.handler.WsEventDispatcher;
 import io.jhpark.kopic.ws.conn.config.WsConnProperties;
+import io.jhpark.kopic.ws.conn.domain.KopicEnvelope;
 import io.jhpark.kopic.ws.conn.interceptor.MetadataInterceptor;
 import io.jhpark.kopic.ws.session.domain.WsSession;
 import io.jhpark.kopic.ws.session.registry.SessionRegistry;
@@ -25,23 +27,37 @@ public class WsConnHandler extends TextWebSocketHandler {
     private final WsConnProperties wsConnProperties;
     private final SessionRegistry sessionRegistry;
     private final WsEventDispatcher wsEventDispatcher;
+    private final CommonMapper commonMapper;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         session.setTextMessageSizeLimit(wsConnProperties.maxTextMessageSize());
 
-        sessionRegistry.save(
-            new WsSession(
-                session,
-                session.getId(),
-                requireTextAttribute(session, MetadataInterceptor.ATTR_GE_ID),
-                requireTextAttribute(session, MetadataInterceptor.ATTR_ROOM_ID),
-                Instant.now(),
-                Instant.now()
-            )
+        WsSession wsSession = new WsSession(
+            session,
+            session.getId(),
+            requireTextAttribute(session, MetadataInterceptor.ATTR_NICKNAME),
+            requireTextAttribute(session, MetadataInterceptor.ATTR_GE_ID),
+            "room-1", // TODO: roomId should be determined by handshake attribute or initial message
+            Instant.now(),
+            Instant.now()
         );
 
-        log.info("connection established: {}", session.getId());
+        sessionRegistry.save(wsSession);
+
+        wsEventDispatcher.dispatch(
+            wsSession.getSessionId(),
+            null,
+            wsSession.getGeId(),
+            commonMapper.write(
+                new KopicEnvelope(101, 
+                commonMapper.rawMapper().createObjectNode()
+                    .put("roomCode", requireTextAttribute(session, MetadataInterceptor.ATTR_ROOM_CODE))
+                    .put("nickname", wsSession.getNickname())
+            ))
+        );
+        
+        // log.info("connection established: {}", session.getId());
     }
 
     @Override
@@ -65,7 +81,19 @@ public class WsConnHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        log.info("connection closed: {}", session.getId());
+
+        sessionRegistry.findBySessionId(session.getId()).ifPresent(wsSession ->
+            wsEventDispatcher.dispatch(
+                wsSession.getSessionId(),
+                null,
+                wsSession.getGeId(),
+                commonMapper.write(
+                    new KopicEnvelope(102, 
+                    commonMapper.rawMapper().createObjectNode()
+                        .put("roomId", "room-1")
+                ))
+            ));
+        // log.info("connection closed: {}", session.getId());
         sessionRegistry.remove(session.getId());
     }
 

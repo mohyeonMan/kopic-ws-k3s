@@ -47,10 +47,10 @@ public class WsEventDispatcher {
         }
 
         int eventCode = eventNode.intValue();
-        String payloadJson = root.has("p") && !root.get("p").isNull() ? root.get("p").toString() : null;
+        JsonNode payloadNode = root.has("p") && !root.get("p").isNull() ? root.get("p") : null;
         // String requestId = root.hasNonNull("rid") ? root.get("rid").asText() : null;
 
-        return new KopicEnvelope(eventCode, payloadJson/* , requestId */);
+        return new KopicEnvelope(eventCode, payloadNode/* , requestId */);
     }
 
 }
