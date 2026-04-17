@@ -51,7 +51,12 @@ public class WsConnHandler extends TextWebSocketHandler {
             .ifPresentOrElse(
                 touchedSession -> {
                     log.debug("Session touched: {}", touchedSession.getSessionId());
-                    wsEventDispatcher.dispatch(session.getId(), touchedSession.getGeId(), message.getPayload());
+                    wsEventDispatcher.dispatch(
+                        touchedSession.getSessionId(),
+                        touchedSession.getRoomId(),
+                        touchedSession.getGeId(),
+                        message.getPayload()
+                    );
                 },
                 () -> log.warn("Received message for unknown session: {}", session.getId())
             );

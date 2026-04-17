@@ -6,6 +6,6 @@ public interface WsEventHandler {
     
     int supports();
 
-    void handle(String sessionId, String targetGeId, KopicEnvelope envelope);
+    void handle(String sessionId, String roomId, String targetGeId, KopicEnvelope envelope);
 
 }

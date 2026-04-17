@@ -20,15 +20,17 @@ public class WsEventPublisher {
 
     public void publish(String targetGeId, WsEvent event) {
         String exchange = rabbitProperties.outboundExchange();
+        String routingKey = rabbitProperties.outboundRoutingKey(targetGeId);
 
         log.info(
-            "Published ws event senderId={} exchange={} targetGeId={} envelope={}",
-            event.senderId(),
+            "Published ws event senderSessionId={} exchange={} targetGeId={} routingKey={} envelope={}",
+            event.senderSessionId(),
             exchange,
             targetGeId,
+            routingKey,
             event.envelope()
         );
-        // rabbitTemplate.convertAndSend(exchange, targetGeId, commonMapper.write(event));
+        rabbitTemplate.convertAndSend(exchange, routingKey, commonMapper.write(event));
     }
 
 }

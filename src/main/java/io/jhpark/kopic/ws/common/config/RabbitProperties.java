@@ -6,13 +6,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record RabbitProperties(
 	String outboundExchange,
 	String inboundQueuePrefix,
-	String inboundRoutingKeyPrefix
+	String inboundRoutingKeyPrefix,
+	String outboundRoutingKeyPrefix
 ) {
 
 	public RabbitProperties {
-		outboundExchange = normalize(outboundExchange, "kopic.ge.exchange");
+		outboundExchange = normalize(outboundExchange, "kopic.ws.exchange");
 		inboundQueuePrefix = normalize(inboundQueuePrefix, "kopic.ws.event.");
 		inboundRoutingKeyPrefix = normalize(inboundRoutingKeyPrefix, "kopic.ws.route.");
+		outboundRoutingKeyPrefix = normalize(outboundRoutingKeyPrefix, "kopic.ge.route.");
 	}
 
 	private static String normalize(String value, String defaultValue) {
@@ -23,7 +25,11 @@ public record RabbitProperties(
 		return inboundQueuePrefix + nodeId;
 	}
 
-	public String routingKey(String nodeId) {
+	public String inboundRoutingKey(String nodeId) {
 		return inboundRoutingKeyPrefix + nodeId;
+	}
+
+	public String outboundRoutingKey(String nodeId) {
+		return outboundRoutingKeyPrefix + nodeId;
 	}
 }

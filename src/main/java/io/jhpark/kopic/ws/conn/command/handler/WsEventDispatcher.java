@@ -18,7 +18,7 @@ public class WsEventDispatcher {
     private final DefaultEventHandler defaultEventHandler;
     private final CommonMapper commonMapper;
 
-    public void dispatch(String sessionId, String targetGeId, String message) {
+    public void dispatch(String sessionId, String roomId, String targetGeId, String message) {
         KopicEnvelope envelope = extractEnvelope(message);
         if (envelope == null) {
             log.warn("Failed to parse message: {}", message);
@@ -28,9 +28,9 @@ public class WsEventDispatcher {
         log.debug("Dispatching event: {}", envelope);
 
         if(envelope.e() == 1) { // PING
-            pingEventHandler.handle(sessionId, targetGeId, envelope);
+            pingEventHandler.handle(sessionId, roomId, targetGeId, envelope);
         } else {
-            defaultEventHandler.handle(sessionId, targetGeId, envelope);
+            defaultEventHandler.handle(sessionId, roomId, targetGeId, envelope);
         }
 
     }

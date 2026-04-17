@@ -44,7 +44,7 @@ public class RabbitConfig {
 	) {
 		return BindingBuilder.bind(rabbitNodeQueue)
 			.to(engineOutboundExchange)
-			.with(rabbitProperties.routingKey(nodeProperties.nodeId()));
+			.with(rabbitProperties.inboundRoutingKey(nodeProperties.nodeId()));
 	}
 
 	// @Bean

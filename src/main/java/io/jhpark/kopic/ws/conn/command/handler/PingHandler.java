@@ -20,7 +20,7 @@ public class PingHandler implements WsEventHandler {
     }
 
     @Override
-    public void handle(String sessionId, String targetGeId, KopicEnvelope envelope) {
+    public void handle(String sessionId, String roomId, String targetGeId, KopicEnvelope envelope) {
         log.debug("Handling PING event for session {}: {}", sessionId, envelope);
         // PING 이벤트에 대한 처리 로직 (예: PONG 응답 전송)
         wsMessageSender.sendMessage(sessionId, new KopicEnvelope(2, null));

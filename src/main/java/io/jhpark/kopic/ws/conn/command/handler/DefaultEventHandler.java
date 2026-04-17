@@ -2,6 +2,7 @@ package io.jhpark.kopic.ws.conn.command.handler;
 
 import org.springframework.stereotype.Component;
 
+import io.jhpark.kopic.ws.common.config.NodeProperties;
 import io.jhpark.kopic.ws.common.util.TimeFormatUtil;
 import io.jhpark.kopic.ws.conn.command.dto.WsEvent;
 import io.jhpark.kopic.ws.conn.domain.KopicEnvelope;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DefaultEventHandler implements WsEventHandler {
 
     private final WsEventPublisher wsEventPublisher;
+    private final NodeProperties nodeProperties;
 
     @Override
     public int supports() {
@@ -22,9 +24,12 @@ public class DefaultEventHandler implements WsEventHandler {
     }
 
     @Override
-    public void handle(String sessionId, String targetGeId, KopicEnvelope envelope) {
+    public void handle(String sessionId, String roomId, String targetGeId, KopicEnvelope envelope) {
         log.debug("Handling default event with payload: {}", envelope.p());
-        wsEventPublisher.publish(targetGeId, new WsEvent(sessionId, envelope, TimeFormatUtil.now()));
+        wsEventPublisher.publish(
+            targetGeId,
+            new WsEvent(sessionId, nodeProperties.nodeId(), roomId, envelope, TimeFormatUtil.now())
+        );
     }
 
 }

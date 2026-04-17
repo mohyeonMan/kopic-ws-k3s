@@ -27,7 +27,7 @@ public class WsEventSubscriber {
 		containerFactory = "rabbitListenerContainerFactory"
 	)
 	public void receive(String payload) {
-		log.info("Received message from RabbitMQ: {}", payload);
+		log.debug("Received message from RabbitMQ: {}", payload);
 		GeEvent event = commonMapper.read(payload, GeEvent.class);
 		if (event == null) {
 			log.warn("Dropping non-JSON or unmappable RabbitMQ payload: {}", payload);
