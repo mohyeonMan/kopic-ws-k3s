@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class InMemorySessionRegistry implements SessionRegistry {
 
 	private final ConcurrentHashMap<String, WsSession> sessionsBySessionId = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, String> sessionIdByWebSocketSessionId = new ConcurrentHashMap<>();
 
 	@Override
 	public Optional<WsSession> findBySessionId(String sessionId) {
@@ -22,13 +23,14 @@ public class InMemorySessionRegistry implements SessionRegistry {
 
 	@Override
 	public void save(WsSession session) {
-		sessionsBySessionId.put(session.getSession().getId(), session);
+		sessionsBySessionId.put(session.getSessionId(), session);
+		sessionIdByWebSocketSessionId.put(session.getSession().getId(), session.getSessionId());
 		log.info("Session saved: {}", session.toString());
 	}
 
 	@Override
-	public Optional<WsSession> touch(String sessionId, Instant touchedAt) {
-		return findBySessionId(sessionId).map(session -> {
+	public Optional<WsSession> touch(String webSocketSessionId, Instant touchedAt) {
+		return findByWebSocketSessionId(webSocketSessionId).map(session -> {
 			session.setLastSeenAt(touchedAt);
 			log.debug("Session touched: {}", session.getSessionId());
 			return session;
@@ -37,6 +39,17 @@ public class InMemorySessionRegistry implements SessionRegistry {
 
 	@Override
 	public void remove(String sessionId) {
-		sessionsBySessionId.remove(sessionId);
+		WsSession removedSession = sessionsBySessionId.remove(sessionId);
+		if (removedSession != null) {
+			sessionIdByWebSocketSessionId.remove(removedSession.getSession().getId());
+		}
+	}
+
+	private Optional<WsSession> findByWebSocketSessionId(String webSocketSessionId) {
+		String sessionId = sessionIdByWebSocketSessionId.get(webSocketSessionId);
+		if (sessionId == null) {
+			return Optional.empty();
+		}
+		return findBySessionId(sessionId);
 	}
 }

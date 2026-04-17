@@ -35,7 +35,7 @@ public class WsConnHandler extends TextWebSocketHandler {
 
         WsSession wsSession = new WsSession(
             session,
-            session.getId(),
+            "sid_"+session.getId().substring(0, 8),
             requireTextAttribute(session, MetadataInterceptor.ATTR_NICKNAME),
             requireTextAttribute(session, MetadataInterceptor.ATTR_GE_ID),
             "room-1", // TODO: roomId should be determined by handshake attribute or initial message
@@ -81,20 +81,24 @@ public class WsConnHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-
-        sessionRegistry.findBySessionId(session.getId()).ifPresent(wsSession ->
-            wsEventDispatcher.dispatch(
-                wsSession.getSessionId(),
-                null,
-                wsSession.getGeId(),
-                commonMapper.write(
-                    new KopicEnvelope(102, 
-                    commonMapper.rawMapper().createObjectNode()
-                        .put("roomId", "room-1")
-                ))
-            ));
+        sessionRegistry.touch(session.getId(), Instant.now())
+            .ifPresentOrElse(
+                wsSession -> {
+                    wsEventDispatcher.dispatch(
+                        wsSession.getSessionId(),
+                        null,
+                        wsSession.getGeId(),
+                        commonMapper.write(
+                            new KopicEnvelope(102, 
+                            commonMapper.rawMapper().createObjectNode()
+                                .put("roomId", "room-1")
+                        ))
+                    );
+                    sessionRegistry.remove(wsSession.getSessionId());
+                },
+                () -> log.warn("Connection closed for unknown session: {}", session.getId())
+            );
         // log.info("connection closed: {}", session.getId());
-        sessionRegistry.remove(session.getId());
     }
 
     private String requireTextAttribute(WebSocketSession session, String attributeName) {

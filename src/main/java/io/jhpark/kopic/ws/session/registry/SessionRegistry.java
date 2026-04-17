@@ -11,7 +11,7 @@ public interface SessionRegistry {
 
 	void save(WsSession session);
 
-	Optional<WsSession> touch(String sessionId, Instant touchedAt);
+	Optional<WsSession> touch(String webSocketSessionId, Instant touchedAt);
 
 	void remove(String sessionId);
 
