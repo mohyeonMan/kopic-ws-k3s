@@ -29,7 +29,7 @@ public class WsMessageSender {
                         log.error("Failed to send message to session {}: {}", sessionId, e.getMessage());
                     }
                 },
-                () -> log.warn("Attempted to send message to unknown session: {}", sessionId)
+                () -> log.warn("Attempted to send message to unknown session: {}, {}", sessionId, message)
             );
         
     }

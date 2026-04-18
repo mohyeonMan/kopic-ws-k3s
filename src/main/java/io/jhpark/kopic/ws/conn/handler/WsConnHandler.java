@@ -98,16 +98,18 @@ public class WsConnHandler extends TextWebSocketHandler {
         sessionRegistry.touch(session.getId(), Instant.now())
             .ifPresentOrElse(
                 wsSession -> {
-                    wsEventDispatcher.dispatch(
-                        wsSession.getSessionId(),
-                        null,
-                        wsSession.getGeId(),
-                        commonMapper.write(
-                            new KopicEnvelope(102, 
-                            commonMapper.rawMapper().createObjectNode()
-                                .put("roomId", wsSession.getRoomId())
-                        ))
-                    );
+                    if(wsSession.getRoomId() != null) {
+                        wsEventDispatcher.dispatch(
+                            wsSession.getSessionId(),
+                            null,
+                            wsSession.getGeId(),
+                            commonMapper.write(
+                                new KopicEnvelope(102, 
+                                commonMapper.rawMapper().createObjectNode()
+                                    .put("roomId", wsSession.getRoomId())
+                            ))
+                        );
+                    }
                     sessionRegistry.remove(wsSession.getSessionId());
                 },
                 () -> log.warn("Connection closed for unknown session: {}", session.getId())
