@@ -1,6 +1,8 @@
 package io.jhpark.kopic.ws.conn.interceptor;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -30,12 +32,22 @@ public class MetadataInterceptor implements HandshakeInterceptor {
 		WebSocketHandler wsHandler,
 		Map<String, Object> attributes
 	) {
-        URI uri = request.getURI();
+		URI uri = request.getURI();
 		var queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
-		String geId = queryParams.getFirst("geId");
-		String roomCode = queryParams.getFirst("roomCode");
-		String nickname = queryParams.getFirst("nickname");
-		int action = queryParams.getFirst("action") != null ? Integer.parseInt(queryParams.getFirst("action")) : 0;
+		String geId;
+		String roomCode;
+		String nickname;
+		int action;
+		try {
+			geId = decodeQueryParam(queryParams.getFirst("geId"));
+			roomCode = decodeQueryParam(queryParams.getFirst("roomCode"));
+			nickname = decodeQueryParam(queryParams.getFirst("nickname"));
+			action = parseAction(decodeQueryParam(queryParams.getFirst("action")));
+		} catch (IllegalArgumentException e) {
+			log.warn("ws handshake rejected invalid query params: {}", e.getMessage());
+			response.setStatusCode(HttpStatus.BAD_REQUEST);
+			return false;
+		}
 
 		if (geId == null || geId.isBlank() || nickname == null || nickname.isBlank()) {
 			log.warn("ws handshake rejected missing query params geId={} nickname={}", geId, nickname);
@@ -49,7 +61,29 @@ public class MetadataInterceptor implements HandshakeInterceptor {
 		attributes.put(ATTR_NICKNAME, nickname);
 		attributes.put(ATTR_ACTION, action);
 		return true;
-    }
+	}
+
+	private String decodeQueryParam(String value) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			return URLDecoder.decode(value, StandardCharsets.UTF_8);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("invalid url encoding: " + value, e);
+		}
+	}
+
+	private int parseAction(String value) {
+		if (value == null || value.isBlank()) {
+			return 0;
+		}
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid action: " + value, e);
+		}
+	}
 
     @Override
 	public void afterHandshake(
