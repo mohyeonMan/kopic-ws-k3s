@@ -20,6 +20,8 @@ public class MetadataInterceptor implements HandshakeInterceptor {
     public static final String ATTR_ROOM_CODE = "roomId";
     public static final String ATTR_GE_ID = "geId";
 	public static final String ATTR_NICKNAME = "nickname";
+	public static final String ATTR_ACTION = "action";
+
     
     @Override
 	public boolean beforeHandshake(
@@ -33,6 +35,7 @@ public class MetadataInterceptor implements HandshakeInterceptor {
 		String geId = queryParams.getFirst("geId");
 		String roomCode = queryParams.getFirst("roomCode");
 		String nickname = queryParams.getFirst("nickname");
+		int action = queryParams.getFirst("action") != null ? Integer.parseInt(queryParams.getFirst("action")) : 0;
 
 		if (geId == null || geId.isBlank() || nickname == null || nickname.isBlank()) {
 			log.warn("ws handshake rejected missing query params geId={} nickname={}", geId, nickname);
@@ -44,6 +47,7 @@ public class MetadataInterceptor implements HandshakeInterceptor {
 		attributes.put(ATTR_ROOM_CODE, roomCode);
 		attributes.put(ATTR_GE_ID, geId);
 		attributes.put(ATTR_NICKNAME, nickname);
+		attributes.put(ATTR_ACTION, action);
 		return true;
     }
 

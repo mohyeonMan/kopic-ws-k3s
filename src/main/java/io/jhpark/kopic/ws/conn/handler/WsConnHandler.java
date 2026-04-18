@@ -49,20 +49,24 @@ public class WsConnHandler extends TextWebSocketHandler {
         sessionRegistry.save(wsSession);
 
         
+        
         ObjectNode payload = commonMapper.rawMapper().createObjectNode()
             .put("nickname", wsSession.getNickname());
         String roomCode = getTextAttribute(session, MetadataInterceptor.ATTR_ROOM_CODE);
+        int action = getIntAttribute(session, MetadataInterceptor.ATTR_ACTION, 0);
+
         if(roomCode != null) {
             payload.put("roomCode", roomCode);
         }
 
+        int e = action == 0 ? 101 : 103;
 
         wsEventDispatcher.dispatch(
             wsSession.getSessionId(),
             null,
             wsSession.getGeId(),
             commonMapper.write(
-                new KopicEnvelope(101, 
+                new KopicEnvelope(e, 
                 payload
             ))
         );
@@ -125,6 +129,26 @@ public class WsConnHandler extends TextWebSocketHandler {
             return text;
         }
         return null;
+    }
+
+    private int getIntAttribute(WebSocketSession session, String attributeName, int defaultValue) {
+        Object value = session.getAttributes().get(attributeName);
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Integer.parseInt(text);
+            } catch (NumberFormatException e) {
+                log.warn("Invalid int attribute {}='{}', defaulting to {}", attributeName, text, defaultValue);
+                return defaultValue;
+            }
+        }
+        log.warn("Invalid attribute type {}={} defaulting to {}", attributeName, value.getClass().getSimpleName(), defaultValue);
+        return defaultValue;
     }
 
     

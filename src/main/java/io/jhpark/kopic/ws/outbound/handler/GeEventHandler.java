@@ -3,7 +3,9 @@ package io.jhpark.kopic.ws.outbound.handler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.jhpark.kopic.ws.conn.domain.KopicEnvelope;
 import io.jhpark.kopic.ws.conn.handler.WsMessageSender;
 import io.jhpark.kopic.ws.outbound.dto.GeEvent;
 import io.jhpark.kopic.ws.session.registry.SessionRegistry;
@@ -33,7 +35,6 @@ public class GeEventHandler {
 	private void handleJoinAccepted(GeEvent event) {
 		JsonNode payload = event.envelope().p();
 		String roomId = payload == null || payload.isNull() ? null : payload.path("rid").asText(null);
-
 		if (roomId == null || roomId.isBlank()) {
 			log.warn("408 event missing rid for targetSessionId={}", event.targetSessionId());
 		} else {
@@ -44,7 +45,7 @@ public class GeEventHandler {
 					() -> log.warn("Cannot register roomId, unknown targetSessionId={}", event.targetSessionId())
 				);
 		}
-		wsMessageSender.sendMessage(event.targetSessionId(), event.envelope());
+		wsMessageSender.sendMessage(event.targetSessionId(), removeRid(event.envelope()));
 	}
 
 	private void handleDefault(GeEvent event) {
@@ -54,5 +55,16 @@ public class GeEventHandler {
 			event.targetSessionId()
 		);
 		wsMessageSender.sendMessage(event.targetSessionId(), event.envelope());
+	}
+
+	private KopicEnvelope removeRid(KopicEnvelope envelope) {
+		JsonNode payload = envelope.p();
+		if (!(payload instanceof ObjectNode objectPayload)) {
+			return envelope;
+		}
+
+		ObjectNode copiedPayload = objectPayload.deepCopy();
+		copiedPayload.remove("rid");
+		return new KopicEnvelope(envelope.e(), copiedPayload);
 	}
 }

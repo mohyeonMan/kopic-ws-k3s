@@ -22,7 +22,7 @@ public class WsEventPublisher {
         String exchange = rabbitProperties.outboundExchange();
         String routingKey = rabbitProperties.outboundRoutingKey(targetGeId);
 
-        log.info(
+        log.debug(
             "Published ws event senderSessionId={} exchange={} targetGeId={} routingKey={} envelope={}",
             event.senderSessionId(),
             exchange,
