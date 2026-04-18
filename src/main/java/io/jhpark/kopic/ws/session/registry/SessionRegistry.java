@@ -13,6 +13,8 @@ public interface SessionRegistry {
 
 	Optional<WsSession> touch(String webSocketSessionId, Instant touchedAt);
 
+	Optional<WsSession> setRoomId(String sessionId, String roomId);
+
 	void remove(String sessionId);
 
 }

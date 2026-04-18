@@ -3,8 +3,8 @@ package io.jhpark.kopic.ws.outbound;
 import org.springframework.stereotype.Component;
 
 import io.jhpark.kopic.ws.common.util.CommonMapper;
-import io.jhpark.kopic.ws.conn.handler.WsMessageSender;
 import io.jhpark.kopic.ws.outbound.dto.GeEvent;
+import io.jhpark.kopic.ws.outbound.handler.GeEventHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -12,14 +12,13 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WsEventSubscriber {
+public class GeEventSubscriber {
     
-    private final WsMessageSender wsMessageSender;
+    private final GeEventHandler geEventHandler;
 	private final CommonMapper commonMapper;
 
 	public void handle(GeEvent event) {
-		log.info("Received event from RabbitMQ: {}", event);
-		wsMessageSender.sendMessage(event.targetSessionId(), event.envelope());
+		geEventHandler.handle(event);
 	}
 
     @RabbitListener(

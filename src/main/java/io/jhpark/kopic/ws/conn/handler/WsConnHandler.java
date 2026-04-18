@@ -11,6 +11,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.jhpark.kopic.ws.common.util.CommonMapper;
 import io.jhpark.kopic.ws.conn.command.handler.WsEventDispatcher;
 import io.jhpark.kopic.ws.conn.config.WsConnProperties;
@@ -38,12 +41,21 @@ public class WsConnHandler extends TextWebSocketHandler {
             "sid_"+session.getId().substring(0, 8),
             requireTextAttribute(session, MetadataInterceptor.ATTR_NICKNAME),
             requireTextAttribute(session, MetadataInterceptor.ATTR_GE_ID),
-            "room-1", // TODO: roomId should be determined by handshake attribute or initial message
+            null, // join_accepted가 오기전엔 없어야함.
             Instant.now(),
             Instant.now()
         );
 
         sessionRegistry.save(wsSession);
+
+        
+        ObjectNode payload = commonMapper.rawMapper().createObjectNode()
+            .put("nickname", wsSession.getNickname());
+        String roomCode = getTextAttribute(session, MetadataInterceptor.ATTR_ROOM_CODE);
+        if(roomCode != null) {
+            payload.put("roomCode", roomCode);
+        }
+
 
         wsEventDispatcher.dispatch(
             wsSession.getSessionId(),
@@ -51,9 +63,7 @@ public class WsConnHandler extends TextWebSocketHandler {
             wsSession.getGeId(),
             commonMapper.write(
                 new KopicEnvelope(101, 
-                commonMapper.rawMapper().createObjectNode()
-                    .put("roomCode", requireTextAttribute(session, MetadataInterceptor.ATTR_ROOM_CODE))
-                    .put("nickname", wsSession.getNickname())
+                payload
             ))
         );
         
@@ -91,7 +101,7 @@ public class WsConnHandler extends TextWebSocketHandler {
                         commonMapper.write(
                             new KopicEnvelope(102, 
                             commonMapper.rawMapper().createObjectNode()
-                                .put("roomId", "room-1")
+                                .put("roomId", wsSession.getRoomId())
                         ))
                     );
                     sessionRegistry.remove(wsSession.getSessionId());
@@ -102,12 +112,20 @@ public class WsConnHandler extends TextWebSocketHandler {
     }
 
     private String requireTextAttribute(WebSocketSession session, String attributeName) {
-		Object value = session.getAttributes().get(attributeName);
-		if (value instanceof String text && !text.isBlank()) {
-			return text;
+		String value = getTextAttribute(session, attributeName);
+		if (value == null) {
+			throw new IllegalStateException("missing required handshake attribute: " + attributeName);
 		}
-		throw new IllegalStateException("missing required handshake attribute: " + attributeName);
+		return value;
 	}
+
+    private String getTextAttribute(WebSocketSession session, String attributeName) {
+        Object value = session.getAttributes().get(attributeName);
+        if (value instanceof String text) {
+            return text;
+        }
+        return null;
+    }
 
     
 }

@@ -38,6 +38,15 @@ public class InMemorySessionRegistry implements SessionRegistry {
 	}
 
 	@Override
+	public Optional<WsSession> setRoomId(String sessionId, String roomId) {
+		return findBySessionId(sessionId).map(session -> {
+			session.setRoomId(roomId);
+			log.info("Session roomId updated sessionId={} roomId={}", sessionId, roomId);
+			return session;
+		});
+	}
+
+	@Override
 	public void remove(String sessionId) {
 		WsSession removedSession = sessionsBySessionId.remove(sessionId);
 		if (removedSession != null) {
