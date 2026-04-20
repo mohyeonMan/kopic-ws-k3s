@@ -11,7 +11,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.jhpark.kopic.ws.common.util.CommonMapper;
@@ -101,12 +100,11 @@ public class WsConnHandler extends TextWebSocketHandler {
                     if(wsSession.getRoomId() != null) {
                         wsEventDispatcher.dispatch(
                             wsSession.getSessionId(),
-                            null,
+                            wsSession.getRoomId(),
                             wsSession.getGeId(),
                             commonMapper.write(
                                 new KopicEnvelope(102, 
-                                commonMapper.rawMapper().createObjectNode()
-                                    .put("roomId", wsSession.getRoomId())
+                                null
                             ))
                         );
                     }
