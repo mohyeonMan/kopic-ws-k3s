@@ -13,6 +13,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.jhpark.kopic.ws.common.metrics.WsMetrics;
 import io.jhpark.kopic.ws.common.util.CommonMapper;
 import io.jhpark.kopic.ws.conn.command.handler.WsEventDispatcher;
 import io.jhpark.kopic.ws.conn.config.WsConnProperties;
@@ -30,6 +31,7 @@ public class WsConnHandler extends TextWebSocketHandler {
     private final SessionRegistry sessionRegistry;
     private final WsEventDispatcher wsEventDispatcher;
     private final CommonMapper commonMapper;
+    private final WsMetrics wsMetrics;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
@@ -46,6 +48,11 @@ public class WsConnHandler extends TextWebSocketHandler {
         );
 
         sessionRegistry.save(wsSession);
+		wsMetrics.increment(
+			"kopic_ws_connection_total",
+			"event",
+			"opened"
+		);
 
         
         
@@ -87,7 +94,14 @@ public class WsConnHandler extends TextWebSocketHandler {
                         message.getPayload()
                     );
                 },
-                () -> log.warn("Received message for unknown session: {}", session.getId())
+                () -> {
+                    log.warn("Received message for unknown session: {}", session.getId());
+                    wsMetrics.increment(
+                        "kopic_ws_client_inbound_rejected_total",
+                        "reason",
+                        "unknown_session"
+                    );
+                }
             );
 
     }
@@ -97,6 +111,11 @@ public class WsConnHandler extends TextWebSocketHandler {
         sessionRegistry.touch(session.getId(), Instant.now())
             .ifPresentOrElse(
                 wsSession -> {
+                    wsMetrics.increment(
+                        "kopic_ws_connection_total",
+                        "event",
+                        "closed"
+                    );
                     if(wsSession.getRoomId() != null) {
                         wsEventDispatcher.dispatch(
                             wsSession.getSessionId(),
@@ -110,7 +129,14 @@ public class WsConnHandler extends TextWebSocketHandler {
                     }
                     sessionRegistry.remove(wsSession.getSessionId());
                 },
-                () -> log.warn("Connection closed for unknown session: {}", session.getId())
+                () -> {
+                    log.warn("Connection closed for unknown session: {}", session.getId());
+                    wsMetrics.increment(
+                        "kopic_ws_connection_total",
+                        "event",
+                        "closed_unknown_session"
+                    );
+                }
             );
         // log.info("connection closed: {}", session.getId());
     }

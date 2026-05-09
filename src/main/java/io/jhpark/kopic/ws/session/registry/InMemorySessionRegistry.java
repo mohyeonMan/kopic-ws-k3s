@@ -54,6 +54,22 @@ public class InMemorySessionRegistry implements SessionRegistry {
 		}
 	}
 
+	@Override
+	public int countActiveSessions() {
+		return sessionsBySessionId.size();
+	}
+
+	@Override
+	public int countSessionsInRoom() {
+		int count = 0;
+		for (WsSession session : sessionsBySessionId.values()) {
+			if (session.getRoomId() != null && !session.getRoomId().isBlank()) {
+				count++;
+			}
+		}
+		return count;
+	}
+
 	private Optional<WsSession> findByWebSocketSessionId(String webSocketSessionId) {
 		String sessionId = sessionIdByWebSocketSessionId.get(webSocketSessionId);
 		if (sessionId == null) {

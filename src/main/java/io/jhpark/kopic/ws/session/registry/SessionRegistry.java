@@ -17,4 +17,8 @@ public interface SessionRegistry {
 
 	void remove(String sessionId);
 
+	int countActiveSessions();
+
+	int countSessionsInRoom();
+
 }

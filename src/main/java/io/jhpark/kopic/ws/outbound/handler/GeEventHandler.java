@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.jhpark.kopic.ws.common.metrics.WsMetrics;
 import io.jhpark.kopic.ws.conn.domain.KopicEnvelope;
 import io.jhpark.kopic.ws.conn.handler.WsMessageSender;
 import io.jhpark.kopic.ws.outbound.dto.GeEvent;
@@ -19,10 +20,32 @@ public class GeEventHandler {
 
 	private final SessionRegistry sessionRegistry;
 	private final WsMessageSender wsMessageSender;
+	private final WsMetrics wsMetrics;
 
 	public void handle(GeEvent event) {
+		if (event == null) {
+			wsMetrics.increment(
+				"kopic_ws_ge_inbound_rejected_total",
+				"reason",
+				"missing_event"
+			);
+			return;
+		}
+		if (isBlank(event.targetSessionId())) {
+			wsMetrics.increment(
+				"kopic_ws_ge_inbound_rejected_total",
+				"reason",
+				"missing_target_session_id"
+			);
+			return;
+		}
 		if (event.envelope() == null) {
 			log.warn("Dropping event with null envelope: {}", event);
+			wsMetrics.increment(
+				"kopic_ws_ge_inbound_rejected_total",
+				"reason",
+				"missing_envelope"
+			);
 			return;
 		}
 
@@ -37,12 +60,24 @@ public class GeEventHandler {
 		String roomId = payload == null || payload.isNull() ? null : payload.path("rid").asText(null);
 		if (roomId == null || roomId.isBlank()) {
 			log.warn("408 event missing rid for targetSessionId={}", event.targetSessionId());
+			wsMetrics.increment(
+				"kopic_ws_ge_inbound_rejected_total",
+				"reason",
+				"missing_room_id_on_join_accepted"
+			);
 		} else {
 			String resolvedRoomId = roomId;
 			sessionRegistry.setRoomId(event.targetSessionId(), resolvedRoomId)
 				.ifPresentOrElse(
 					session -> log.info("Registered roomId={} for sessionId={}", resolvedRoomId, session.getSessionId()),
-					() -> log.warn("Cannot register roomId, unknown targetSessionId={}", event.targetSessionId())
+					() -> {
+						log.warn("Cannot register roomId, unknown targetSessionId={}", event.targetSessionId());
+						wsMetrics.increment(
+							"kopic_ws_ge_inbound_rejected_total",
+							"reason",
+							"unknown_target_session"
+						);
+					}
 				);
 		}
 		wsMessageSender.sendMessage(event.targetSessionId(), removeRid(event.envelope()));
@@ -66,5 +101,9 @@ public class GeEventHandler {
 		ObjectNode copiedPayload = objectPayload.deepCopy();
 		copiedPayload.remove("rid");
 		return new KopicEnvelope(envelope.e(), copiedPayload);
+	}
+
+	private boolean isBlank(String value) {
+		return value == null || value.isBlank();
 	}
 }
