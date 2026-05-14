@@ -13,3 +13,14 @@ management:
     metrics:
       export:
         enabled: true
+
+kopic:
+  node-id: ${KOPIC_NODE_ID:ws-local}
+  ws:
+    endpoint: ${KOPIC_WS_ENDPOINT:/ws}
+    max-text-message-size: ${KOPIC_WS_MAX_TEXT_MESSAGE_SIZE:8192}
+  rabbit:
+    outbound-exchange: ${KOPIC_RABBIT_OUTBOUND_EXCHANGE:kopic.ws.exchange}
+    inbound-queue-prefix: ${KOPIC_RABBIT_INBOUND_QUEUE_PREFIX:kopic.ws.event.}
+    inbound-routing-key-prefix: ${KOPIC_RABBIT_INBOUND_ROUTING_KEY_PREFIX:kopic.ws.route.}
+    outbound-routing-key-prefix: ${KOPIC_RABBIT_OUTBOUND_ROUTING_KEY_PREFIX:kopic.ge.route.}
