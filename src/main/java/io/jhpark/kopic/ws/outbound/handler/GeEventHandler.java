@@ -50,7 +50,7 @@ public class GeEventHandler {
 		}
 
 		switch (event.envelope().e()) {
-			case 408 -> handleJoinAccepted(event);
+			case 304 -> handleJoinAccepted(event);
 			default -> handleDefault(event);
 		}
 	}
@@ -59,7 +59,7 @@ public class GeEventHandler {
 		JsonNode payload = event.envelope().p();
 		String roomId = payload == null || payload.isNull() ? null : payload.path("rid").asText(null);
 		if (roomId == null || roomId.isBlank()) {
-			log.warn("408 event missing rid for targetSessionId={}", event.targetSessionId());
+			log.warn("304 event missing rid for targetSessionId={}", event.targetSessionId());
 			wsMetrics.increment(
 				"kopic_ws_ge_inbound_rejected_total",
 				"reason",
