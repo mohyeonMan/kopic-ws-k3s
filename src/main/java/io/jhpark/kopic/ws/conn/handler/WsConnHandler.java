@@ -57,12 +57,12 @@ public class WsConnHandler extends TextWebSocketHandler {
         
         
         ObjectNode payload = commonMapper.rawMapper().createObjectNode()
-            .put("nickname", wsSession.getNickname());
+            .put("n", wsSession.getNickname());
         String roomCode = getTextAttribute(session, MetadataInterceptor.ATTR_ROOM_CODE);
         int action = getIntAttribute(session, MetadataInterceptor.ATTR_ACTION, 0);
 
         if(roomCode != null) {
-            payload.put("roomCode", roomCode);
+            payload.put("rc", roomCode);
         }
 
         int e = action == 0 ? 101 : 103;
